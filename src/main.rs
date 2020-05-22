@@ -1,3 +1,7 @@
+// https://www.techiedelight.com/list-of-problems/
+
+mod pair_with_given_sum;
+
 fn main() {
-    println!("Hello, world!");
+    pair_with_given_sum::main();
 }
