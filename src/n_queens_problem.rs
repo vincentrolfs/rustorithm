@@ -1,57 +1,80 @@
 // https://www.techiedelight.com/print-possible-solutions-n-queens-problem/
 
-use std::collections::HashSet;
-
-const N: i32 = 4;
-
-struct QueensData {
-    positions: Vec<(i32, i32)>,
-    i_blocked: HashSet<i32>,
-    j_blocked: HashSet<i32>,
+#[derive(Clone)]
+struct Solution {
+    positions: Vec<(u32, u32)>
 }
 
-fn add_queen(index: usize, i: i32, j: i32, queens: &mut QueensData) {
-    if queens.positions.len() <= index {
-        queens.positions.push((i, j));
-    } else {
-        queens.positions[index] = (i, j);
+fn populate_solutions(amount_rows: u32, amount_cols: u32, solutions: &mut Vec<Solution>){
+    if amount_rows == 0 || amount_cols == 0 {
+        return push_empty_solution(solutions);
     }
-    queens.i_blocked.insert(i);
-    queens.j_blocked.insert(j);
+    populate_solutions(amount_rows - 1, amount_cols, solutions);
+    add_queen(amount_rows - 1, amount_cols, solutions);
 }
 
-fn remove_queen(i: i32, j: i32, queens: &mut QueensData) {
-    queens.i_blocked.remove(&i);
-    queens.j_blocked.remove(&j);
+fn push_empty_solution(solutions: &mut Vec<Solution>){
+    let empty_solution = Solution {
+        positions: vec!()
+    };
+    solutions.push(empty_solution);
 }
 
-fn populate_queens(index: usize, mut queens: &mut QueensData) {
-    if index == N as usize {
-        println!("{:?}\n", queens.positions);
-        return;
-    }
+fn add_queen(row_index: u32, amount_cols: u32, solutions: &mut Vec<Solution>){
+    let mut new_solutions = vec!();
 
-    for i in 0..N {
-        if queens.i_blocked.contains(&i) {
-            continue;
-        }
-
-        for j in 0..N {
-            if ! queens.j_blocked.contains(&j) {
-                add_queen(index, i, j, &mut queens);
-                populate_queens(index + 1, queens);
-                remove_queen(i, j, &mut queens);
+    for solution in solutions.iter() {
+        for col_index in 0..amount_cols {
+            if ! has_conflict(row_index, col_index, &solution) {
+                let mut new_solution = solution.clone();
+                new_solution.positions.push((row_index, col_index));
+                new_solutions.push(new_solution);
             }
         }
+    }
+
+    *solutions = new_solutions;
+}
+
+fn has_conflict(row_index: u32, col_index: u32, solution: &Solution) -> bool {
+    for (row_taken, col_taken) in solution.positions.iter() {
+        if  *row_taken == row_index ||
+            *col_taken == col_index ||
+            *row_taken + *col_taken == row_index + col_index ||
+            (*row_taken as i32) - (*col_taken as i32) == (row_index as i32) - (col_index as i32)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+fn print_solutions(solutions: Vec<Solution>){
+    println!("Number of solutions: {}", solutions.len());
+    for solution in solutions.iter() {
+        println!("--------------------");
+        print_one_solution(&solution.positions);
+    }
+}
+
+fn print_one_solution(positions: &Vec<(u32, u32)>){
+    let len = positions.len() as u32;
+
+    for row_index in 0..len {
+        for col_index in 0..len {
+            if positions.contains(&(row_index, col_index)) {
+                print!("X");
+            } else {
+                print!("O");
+            }
+        }
+        println!();
     }
 }
 
 pub fn main() {
-    let mut queens = QueensData {
-        positions: vec!(),
-        i_blocked: HashSet::new(),
-        j_blocked: HashSet::new()
-    };
-
-    populate_queens(0, &mut queens);
+    let mut solutions = vec!();
+    populate_solutions(8, 8, &mut solutions);
+    print_solutions(solutions);
 }
